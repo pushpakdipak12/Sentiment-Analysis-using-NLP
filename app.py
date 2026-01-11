@@ -1,20 +1,20 @@
 import streamlit as st
 import pandas as pd
 import pickle
-import matplotlib.pyplot as plt
-from collections import Counter
-import re
 
+# Set page config
 st.set_page_config(page_title="Movie Sentiment Analyzer", layout="wide")
 
 st.title("🎬 Movie Review Sentiment Analyzer")
 st.write("Analyze the sentiment of movie reviews using Machine Learning!")
 
+# Load model
 @st.cache_resource
 def load_model():
     with open('sentiment_model.pkl', 'rb') as f:
         return pickle.load(f)
 
+# Load dataset
 @st.cache_data
 def load_dataset():
     return pd.read_csv('IMDB Dataset.csv')
@@ -22,15 +22,17 @@ def load_dataset():
 model = load_model()
 df = load_dataset()
 
+# Sidebar
 with st.sidebar:
     st.header("📊 Dataset Info")
     st.write(f"Total reviews: {len(df)}")
     st.write(f"Positive: {(df['sentiment'] == 'positive').sum()}")
     st.write(f"Negative: {(df['sentiment'] == 'negative').sum()}")
 
-
+# Main content
 col1, col2 = st.columns(2)
 
+# Left column: Single review analysis
 with col1:
     st.subheader("📝 Analyze a Review")
     user_review = st.text_area("Enter a movie review:", height=200)
@@ -48,17 +50,28 @@ with col1:
         else:
             st.warning("Please enter a review!")
 
+# Right column: Dataset statistics
 with col2:
     st.subheader("📈 Dataset Statistics")
     
-    fig, ax = plt.subplots(figsize=(6, 4))
     sentiment_counts = df['sentiment'].value_counts()
-    colors = ['#28a745', '#dc3545']
-    ax.bar(['Positive', 'Negative'], [sentiment_counts.get('positive', 0), sentiment_counts.get('negative', 0)], color=colors)
-    ax.set_ylabel("Count")
-    ax.set_title("Sentiment Distribution")
-    st.pyplot(fig)
+    positive_count = sentiment_counts.get('positive', 0)
+    negative_count = sentiment_counts.get('negative', 0)
+    
+    st.metric("Positive Reviews", positive_count)
+    st.metric("Negative Reviews", negative_count)
+    
+    total = positive_count + negative_count
+    positive_percent = (positive_count / total) * 100
+    negative_percent = (negative_count / total) * 100
+    
+    st.write(f"**Distribution:**")
+    st.write(f"- Positive: {positive_percent:.1f}%")
+    st.write(f"- Negative: {negative_percent:.1f}%")
 
+st.divider()
+
+# Show sample reviews
 st.subheader("📚 Sample Reviews from Dataset")
 col_pos, col_neg = st.columns(2)
 
